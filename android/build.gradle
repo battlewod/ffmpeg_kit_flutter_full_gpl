@@ -56,7 +56,7 @@ android {
     }
 
     dependencies {
-        implementation(project(":ffmpeg"))
+        api project(":ffmpeg")
 
         implementation("androidx.annotation:annotation:1.9.1")
     }
