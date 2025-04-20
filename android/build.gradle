@@ -19,7 +19,6 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-        flatDir { dirs 'libs' }
     }
 }
 
@@ -57,7 +56,10 @@ android {
     }
 
     dependencies {
-        implementation files('libs/com.arthenica.ffmpegkit-flutter-6.0.2.aar')
         implementation("androidx.annotation:annotation:1.9.1")
     }
+}
+
+dependencies {
+    implementation files('libs/com.arthenica.ffmpegkit-flutter-6.0.2.aar')
 }
