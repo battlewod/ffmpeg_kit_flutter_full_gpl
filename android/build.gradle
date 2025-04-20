@@ -56,7 +56,7 @@ android {
     }
 
     dependencies {
-        api project(":ffmpeg")
+        implementation fileTree(dir: "libs", include: ["*.aar"])
 
         implementation("androidx.annotation:annotation:1.9.1")
     }
