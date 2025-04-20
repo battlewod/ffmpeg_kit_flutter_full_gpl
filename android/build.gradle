@@ -56,10 +56,8 @@ android {
     }
 
     dependencies {
+        implementation(project(":ffmpeg"))
+
         implementation("androidx.annotation:annotation:1.9.1")
     }
-}
-
-dependencies {
-    implementation files('libs/com.arthenica.ffmpegkit-flutter-6.0.2.aar')
 }
