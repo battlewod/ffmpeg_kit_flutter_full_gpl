@@ -1,12 +1,18 @@
+import java.security.MessageDigest
+import java.security.NoSuchAlgorithmException
+
 group = "com.arthenica.ffmpegkit.flutter"
 version = "1.0-SNAPSHOT"
 
+
 buildscript {
     ext.kotlin_version = "1.9.24"
-    
+    ext.localMavenPath = project.mkdir("build").absolutePath
+
     repositories {
         google()
         mavenCentral()
+        maven { url "file://$localMavenPath" }
     }
 
     dependencies {
@@ -19,6 +25,7 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        maven { url "file://$localMavenPath" }
     }
 }
 
@@ -56,8 +63,170 @@ android {
     }
 
     dependencies {
-        implementation fileTree(dir: "libs", include: ["*.aar"])
+        implementation('com.arthenica:smart-exception-common:0.2.1')
+        implementation('com.arthenica:smart-exception-java:0.2.1')
 
         implementation("androidx.annotation:annotation:1.9.1")
     }
 }
+
+task useAar {
+    // Chemin vers votre AAR fixe
+    File aarFile = project.file("libs/ffmpeg.aar")
+    
+    if (aarFile.exists()) {
+        // Métadonnées manuelles (à adapter selon votre besoin)
+        String groupId = "com.arthenica"       // Group ID
+        String artifactId = "ffmpegkit"        // Artifact ID
+        String version = "1.0.0"                // Version
+        
+        // Génération des checksums
+        String sha1 = getFileSha1(aarFile)
+        String md5 = getFileMD5(aarFile)
+        
+        println("Processing AAR: ${aarFile.name}")
+        println("SHA1: $sha1")
+        println("MD5: $md5")
+        
+        // Structure du dépôt Maven local
+        String intoStr = localMavenPath + "/" + groupId.replace(".", "/") + "/" + artifactId + "/" + version
+        String newName = "${artifactId}-${version}.aar"
+        
+        // Copie du AAR
+        project.copy {
+            from aarFile.path
+            into intoStr
+            rename(aarFile.name, newName)
+        }
+        
+        // Création des fichiers checksum
+        project.file("${intoStr}/${newName}.md5").write(md5)
+        project.file("${intoStr}/${newName}.sha1").write(sha1)
+        
+        // Génération du POM
+        String pomPath = "${intoStr}/${artifactId}-${version}.pom"
+        project.file(pomPath).write(createPomStr(groupId, artifactId, version))
+        project.file("${pomPath}.md5").write(getFileMD5(project.file(pomPath)))
+        project.file("${pomPath}.sha1").write(getFileSha1(project.file(pomPath)))
+        
+        // Génération des métadonnées
+        String metadataPath = "${project.file(intoStr).parentFile.path}/maven-metadata.xml"
+        project.file(metadataPath).write(createMetadataStr(groupId, artifactId, version))
+        project.file("${metadataPath}.md5").write(getFileMD5(project.file(metadataPath)))
+        project.file("${metadataPath}.sha1").write(getFileSha1(project.file(metadataPath)))
+        
+        // Ajout de la dépendance
+        dependencies {
+            implementation "${groupId}:${artifactId}:${version}"
+        }
+        
+        println("Successfully published ${groupId}:${artifactId}:${version} to local Maven repository")
+    } else {
+        println("Error: ffmpeg.aar not found in libs/ directory")
+    }
+}
+
+public static String createMetadataStr(String groupId, String artifactId, String version) {
+    return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+            "<metadata>\n" +
+            "  <groupId>$groupId</groupId>\n" +
+            "  <artifactId>$artifactId</artifactId>\n" +
+            "  <versioning>\n" +
+            "    <release>$version</release>\n" +
+            "    <versions>\n" +
+            "      <version>$version</version>\n" +
+            "    </versions>\n" +
+            "    <lastUpdated>${new Date().format('yyyyMMdd')}000000</lastUpdated>\n" +
+            "  </versioning>\n" +
+            "</metadata>\n"
+}
+
+public static String createPomStr(String groupId, String artifactId, String version) {
+    return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+            "<project xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\" xmlns=\"http://maven.apache.org/POM/4.0.0\"\n" +
+            "    xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n" +
+            "  <modelVersion>4.0.0</modelVersion>\n" +
+            "  <groupId>$groupId</groupId>\n" +
+            "  <artifactId>$artifactId</artifactId>\n" +
+            "  <version>$version</version>\n" +
+            "  <packaging>aar</packaging>\n" +
+            "</project>\n"
+}
+
+public static String getFileSha1(File file) {
+    FileInputStream input = null;
+    try {
+        input = new FileInputStream(file);
+        MessageDigest digest = MessageDigest.getInstance("SHA-1");
+        byte[] buffer = new byte[1024 * 1024 * 10];
+
+        int len = 0;
+        while ((len = input.read(buffer)) > 0) {
+            digest.update(buffer, 0, len);
+        }
+        String sha1 = new BigInteger(1, digest.digest()).toString(16);
+        int length = 40 - sha1.length();
+        if (length > 0) {
+            for (int i = 0; i < length; i++) {
+                sha1 = "0" + sha1;
+            }
+        }
+        return sha1;
+    }
+    catch (IOException e) {
+        System.out.println(e);
+    }
+    catch (NoSuchAlgorithmException e) {
+        System.out.println(e);
+    }
+    finally {
+        try {
+            if (input != null) {
+                input.close();
+            }
+        }
+        catch (IOException e) {
+            System.out.println(e);
+        }
+    }
+}
+
+public static String getFileMD5(File file) {
+    FileInputStream input = null;
+    try {
+        input = new FileInputStream(file);
+        MessageDigest digest = MessageDigest.getInstance("MD5");
+        byte[] buffer = new byte[1024 * 1024 * 10];
+
+        int len = 0;
+        while ((len = input.read(buffer)) > 0) {
+            digest.update(buffer, 0, len);
+        }
+        String md5 = new BigInteger(1, digest.digest()).toString(16);
+        int length = 32 - md5.length();
+        if (length > 0) {
+            for (int i = 0; i < length; i++) {
+                md5 = "0" + md5;
+            }
+        }
+        return md5;
+    }
+    catch (IOException e) {
+        System.out.println(e);
+    }
+    catch (NoSuchAlgorithmException e) {
+        System.out.println(e);
+    }
+    finally {
+        try {
+            if (input != null) {
+                input.close();
+            }
+        }
+        catch (IOException e) {
+            System.out.println(e);
+        }
+    }
+}
+
+preBuild.dependsOn useAar
