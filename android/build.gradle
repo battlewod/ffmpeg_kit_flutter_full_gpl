@@ -4,15 +4,14 @@ import java.security.NoSuchAlgorithmException
 group = "com.arthenica.ffmpegkit.flutter"
 version = "1.0-SNAPSHOT"
 
+def localMavenPath = project.mkdir("build").absolutePath
 
 buildscript {
     ext.kotlin_version = "1.9.24"
-    ext.localMavenPath = project.mkdir("build").absolutePath
 
     repositories {
         google()
         mavenCentral()
-        maven { url "file://$localMavenPath" }
     }
 
     dependencies {
@@ -25,7 +24,9 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-        maven { url "file://$localMavenPath" }
+        maven {
+            url uri(localMavenPath)
+        }
     }
 }
 
@@ -70,6 +71,8 @@ android {
     }
 }
 
+def aarPath = localMavenPath
+
 task useAar {
     // Chemin vers votre AAR fixe
     File aarFile = project.file("libs/ffmpeg.aar")
@@ -89,7 +92,7 @@ task useAar {
         println("MD5: $md5")
         
         // Structure du dépôt Maven local
-        String intoStr = localMavenPath + "/" + groupId.replace(".", "/") + "/" + artifactId + "/" + version
+        String intoStr = aarPath + "/" + groupId.replace(".", "/") + "/" + artifactId + "/" + version
         String newName = "${artifactId}-${version}.aar"
         
         // Copie du AAR
@@ -120,7 +123,7 @@ task useAar {
             implementation "${groupId}:${artifactId}:${version}"
         }
         
-        println("Successfully published ${groupId}:${artifactId}:${version} to local Maven repository")
+        println("Successfully published ${groupId}:${artifactId}:${version} to ${intoStr}")
     } else {
         println("Error: ffmpeg.aar not found in libs/ directory")
     }
