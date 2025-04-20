@@ -50,11 +50,7 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
-    task setupDependencies(type: Exec) {
-        workingDir '.'
-        commandLine 'sh', '-c', '../scripts/setup_android.sh'
-        onlyIf { !file('libs/com.arthenica.ffmpegkit-flutter-5.1.aar').exists() }
-    }
+
 }
 
 
