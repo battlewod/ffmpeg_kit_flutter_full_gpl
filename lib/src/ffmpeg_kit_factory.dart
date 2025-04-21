@@ -48,15 +48,7 @@ class FFmpegKitFactory {
       _mediaInformationSessionCompleteCallback;
 
   static Statistics mapToStatistics(Map<dynamic, dynamic> statisticsMap) =>
-      new Statistics(
-          statisticsMap["sessionId"],
-          statisticsMap["videoFrameNumber"],
-          statisticsMap["videoFps"],
-          statisticsMap["videoQuality"],
-          statisticsMap["size"],
-          statisticsMap["time"],
-          statisticsMap["bitrate"],
-          statisticsMap["speed"]);
+      new Statistics.fromMap(statisticsMap);
 
   static Log mapToLog(Map<dynamic, dynamic> logMap) =>
       new Log(logMap["sessionId"], logMap["level"], logMap["message"]);

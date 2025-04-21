@@ -28,8 +28,33 @@ class Statistics {
   double _bitrate;
   double _speed;
 
-  Statistics(this._sessionId, this._videoFrameNumber, this._videoFps,
-      this._videoQuality, this._size, this._time, this._bitrate, this._speed);
+  Statistics(this._sessionId, this._videoFrameNumber, this._videoFps, this._videoQuality, this._size, this._time, this._bitrate, this._speed);
+
+  factory Statistics.fromMap(Map<dynamic, dynamic> map) => Statistics(
+    _parseInt(map['sessionId']),
+    _parseInt(map['videoFrameNumber']),
+    _parseDouble(map['videoFps']),
+    _parseDouble(map['videoQuality']),
+    _parseInt(map['size']),
+    _parseInt(map['time']),
+    _parseDouble(map['bitrate']),
+    _parseDouble(map['speed']),
+  );
+
+  // Helpers de parsing sécurisés
+  static int _parseInt(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    if (value is double) return value.round();
+    return int.tryParse(value.toString()) ?? 0;
+  }
+
+  static double _parseDouble(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    return double.tryParse(value.toString()) ?? 0.0;
+  }
 
   int getSessionId() => this._sessionId;
 
